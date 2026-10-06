@@ -63,6 +63,9 @@ const translations = {
     predictTitle: 'Unggah gambar untuk melihat tebakan model',
     predictDescription:
       'Gunakan gambar yang jelas dengan pencahayaan cukup. Hindari menyertakan informasi pribadi yang tidak diperlukan.',
+    hostedDemoTitle: 'Demo publik — prediksi hanya tersedia secara lokal',
+    hostedDemoBody:
+      'Halaman Vercel ini hanya menampilkan demo antarmuka. Prediksi memerlukan backend FastAPI dan Ollama/MedGemma yang berjalan di komputer Anda; unggahan gambar dinonaktifkan pada situs publik.',
     preview: 'PRATINJAU GAMBAR',
     analyze: 'Analisis Gambar',
     analyzing: 'Sedang menganalisis...',
@@ -141,6 +144,9 @@ const translations = {
     predictTitle: 'Upload an image to see the model’s guess',
     predictDescription:
       'Use a clear image with sufficient lighting. Avoid including unnecessary personal information.',
+    hostedDemoTitle: 'Public demo — predictions are local only',
+    hostedDemoBody:
+      'This Vercel page is an interface demo. Predictions require the FastAPI backend and Ollama/MedGemma running on your computer; image uploads are disabled on this public site.',
     preview: 'IMAGE PREVIEW',
     analyze: 'Analyze Image',
     analyzing: 'Analyzing...',
@@ -174,6 +180,7 @@ const navigation = [
 ];
 
 export default function Home() {
+  const isHostedDemo = import.meta.env.PROD;
   const [language, setLanguage] = useState('id');
   const [selectedFile, setSelectedFile] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -414,10 +421,10 @@ export default function Home() {
         <section className="prediction-section page-section" id="prediction">
           <div className="prediction-heading">
             <span className="section-eyebrow">{t.predictEyebrow}</span>
-            <h2>{t.predictTitle}</h2>
-            <p>{t.predictDescription}</p>
+            <h2>{isHostedDemo ? t.hostedDemoTitle : t.predictTitle}</h2>
+            <p>{isHostedDemo ? t.hostedDemoBody : t.predictDescription}</p>
           </div>
-          {!selectedFile ? (
+          {!isHostedDemo && (!selectedFile ? (
             <ImageUploader onFileSelected={handleFileSelection} disabled={isLoading} t={t} />
           ) : (
             <ImagePreview
@@ -428,17 +435,17 @@ export default function Home() {
               isLoading={isLoading}
               t={t}
             />
-          )}
+          ))}
 
-          {isLoading && (
+          {!isHostedDemo && isLoading && (
             <div className="loading-panel">
               <div className="spinner" />
               <div><h4>{t.loadingTitle}</h4><p>{t.loadingMessage}</p></div>
             </div>
           )}
-          {error && <div className="error-message" role="alert">{error}</div>}
-          {result && <PredictionResult result={result} t={t} />}
-          {result && (
+          {!isHostedDemo && error && <div className="error-message" role="alert">{error}</div>}
+          {!isHostedDemo && result && <PredictionResult result={result} t={t} />}
+          {!isHostedDemo && result && (
             <button className="reset-button" type="button" onClick={handleReset}>
               {t.another}
             </button>

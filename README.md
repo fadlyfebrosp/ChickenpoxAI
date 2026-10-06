@@ -150,6 +150,20 @@ Open the local URL printed by Vite, usually `http://localhost:5173`.
 
 The frontend's API service currently targets `http://localhost:8000`. For a local setup, keep the backend on that address. Do not expose the development server or API to an untrusted network without first reviewing and changing the development CORS and host settings.
 
+## Deploy the public frontend to Vercel
+
+The Vercel deployment is a static frontend demo only. The backend depends on Ollama/MedGemma running locally and is not deployed with the website. Production builds therefore explain this limitation and disable image uploads; run the frontend in development with the local backend to try predictions.
+
+To import this GitHub repository in Vercel:
+
+1. Choose **Add New → Project** and import `fadlyfebrosp/ChickenpoxAI`.
+2. Set **Root Directory** to `frontend`.
+3. Select **Vite** as the framework preset (if it is not detected automatically).
+4. Use `npm run build` as the build command and `dist` as the output directory.
+5. Deploy. No environment variables are required for the static demo.
+
+Subsequent pushes to the connected GitHub branch can trigger new deployments.
+
 ## Prepare a dataset
 
 The dataset is not included in this repository. Use only images you have permission to use, and check the original dataset's license and terms before copying or distributing it.
