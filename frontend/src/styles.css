@@ -975,6 +975,28 @@ a:focus-visible,
   font-size: 14px;
 }
 
+.local-backend-notice {
+  width: min(100%, 700px);
+  margin: 0 auto 20px;
+  padding: 15px 18px;
+  border: 1px solid #d9e8fa;
+  border-radius: 15px;
+  background: #f5f9ff;
+  color: #424245;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.local-backend-notice strong {
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.local-backend-notice p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
 .upload-box {
   display: flex;
   min-height: 280px;

@@ -63,9 +63,9 @@ const translations = {
     predictTitle: 'Unggah gambar untuk melihat tebakan model',
     predictDescription:
       'Gunakan gambar yang jelas dengan pencahayaan cukup. Hindari menyertakan informasi pribadi yang tidak diperlukan.',
-    hostedDemoTitle: 'Demo publik — prediksi hanya tersedia secara lokal',
-    hostedDemoBody:
-      'Halaman Vercel ini hanya menampilkan demo antarmuka. Prediksi memerlukan backend FastAPI dan Ollama/MedGemma yang berjalan di komputer Anda; unggahan gambar dinonaktifkan pada situs publik.',
+    localBackendNoticeTitle: 'Mode prediksi lokal',
+    localBackendNotice:
+      'Situs ini berjalan di Vercel, tetapi gambar dikirim langsung ke backend di komputer Anda, bukan ke Vercel. Untuk menggunakan prediksi, jalankan Ollama dengan medgemma:4b dan backend FastAPI di komputer ini. Browser mungkin meminta izin akses jaringan lokal.',
     preview: 'PRATINJAU GAMBAR',
     analyze: 'Analisis Gambar',
     analyzing: 'Sedang menganalisis...',
@@ -79,7 +79,9 @@ const translations = {
     healthy: 'Gambar tersebut tampak normal',
     chickenpox: 'Gambar tersebut terdeteksi ChickenPox',
     another: 'Analisis Gambar Lain',
-    apiError: 'Gambar tidak dapat dianalisis. Silakan coba lagi.',
+    apiError: 'Gambar tidak dapat dianalisis. Periksa backend lokal dan coba lagi.',
+    localBackendError:
+      'Tidak dapat terhubung ke backend lokal. Jalankan Ollama dengan medgemma:4b dan FastAPI di komputer ini (port 8000), lalu izinkan akses jaringan lokal jika browser memintanya.',
     disclaimerTitle: 'Disclaimer:',
     disclaimer:
       'ChickenpoxAI dikembangkan untuk penelitian dan pembelajaran. Hasil hanya berdasarkan pola visual, bukan diagnosis medis. Kondisi kulit yang berbeda dapat terlihat serupa. Konsultasikan dengan tenaga kesehatan untuk evaluasi klinis.',
@@ -144,9 +146,9 @@ const translations = {
     predictTitle: 'Upload an image to see the model’s guess',
     predictDescription:
       'Use a clear image with sufficient lighting. Avoid including unnecessary personal information.',
-    hostedDemoTitle: 'Public demo — predictions are local only',
-    hostedDemoBody:
-      'This Vercel page is an interface demo. Predictions require the FastAPI backend and Ollama/MedGemma running on your computer; image uploads are disabled on this public site.',
+    localBackendNoticeTitle: 'Local prediction mode',
+    localBackendNotice:
+      'This site is hosted on Vercel, but images are sent directly to the backend on your computer, not to Vercel. To use predictions, run Ollama with medgemma:4b and the FastAPI backend on this computer. Your browser may ask permission to access the local network.',
     preview: 'IMAGE PREVIEW',
     analyze: 'Analyze Image',
     analyzing: 'Analyzing...',
@@ -160,7 +162,9 @@ const translations = {
     healthy: 'The image appears normal',
     chickenpox: 'The image was classified by the model as Chickenpox',
     another: 'Analyze Another Image',
-    apiError: 'Unable to analyze this image. Please try again.',
+    apiError: 'Unable to analyze this image. Check the local backend and try again.',
+    localBackendError:
+      'Cannot connect to the local backend. Run Ollama with medgemma:4b and FastAPI on this computer (port 8000), then allow local network access if your browser asks.',
     disclaimerTitle: 'Disclaimer:',
     disclaimer:
       'ChickenpoxAI is developed for research and education. Results are based solely on visual patterns and are not a medical diagnosis. Different skin conditions may look similar. Consult a qualified healthcare professional for clinical evaluation.',
@@ -180,7 +184,6 @@ const navigation = [
 ];
 
 export default function Home() {
-  const isHostedDemo = import.meta.env.PROD;
   const [language, setLanguage] = useState('id');
   const [selectedFile, setSelectedFile] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -211,7 +214,8 @@ export default function Home() {
       const response = await analyzeImage(selectedFile, language);
       setResult(response);
     } catch (err) {
-      const detail = err?.response?.data?.detail || t.apiError;
+      const detail = err?.response?.data?.detail
+        || (err?.code === 'ERR_NETWORK' ? t.localBackendError : t.apiError);
       setError(detail);
     } finally {
       setIsLoading(false);
@@ -421,10 +425,14 @@ export default function Home() {
         <section className="prediction-section page-section" id="prediction">
           <div className="prediction-heading">
             <span className="section-eyebrow">{t.predictEyebrow}</span>
-            <h2>{isHostedDemo ? t.hostedDemoTitle : t.predictTitle}</h2>
-            <p>{isHostedDemo ? t.hostedDemoBody : t.predictDescription}</p>
+            <h2>{t.predictTitle}</h2>
+            <p>{t.predictDescription}</p>
           </div>
-          {!isHostedDemo && (!selectedFile ? (
+          <div className="local-backend-notice">
+            <strong>{t.localBackendNoticeTitle}</strong>
+            <p>{t.localBackendNotice}</p>
+          </div>
+          {!selectedFile ? (
             <ImageUploader onFileSelected={handleFileSelection} disabled={isLoading} t={t} />
           ) : (
             <ImagePreview
@@ -435,17 +443,17 @@ export default function Home() {
               isLoading={isLoading}
               t={t}
             />
-          ))}
+          )}
 
-          {!isHostedDemo && isLoading && (
+          {isLoading && (
             <div className="loading-panel">
               <div className="spinner" />
               <div><h4>{t.loadingTitle}</h4><p>{t.loadingMessage}</p></div>
             </div>
           )}
-          {!isHostedDemo && error && <div className="error-message" role="alert">{error}</div>}
-          {!isHostedDemo && result && <PredictionResult result={result} t={t} />}
-          {!isHostedDemo && result && (
+          {error && <div className="error-message" role="alert">{error}</div>}
+          {result && <PredictionResult result={result} t={t} />}
+          {result && (
             <button className="reset-button" type="button" onClick={handleReset}>
               {t.another}
             </button>

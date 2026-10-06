@@ -148,11 +148,20 @@ npm run dev
 
 Open the local URL printed by Vite, usually `http://localhost:5173`.
 
-The frontend's API service currently targets `http://localhost:8000`. For a local setup, keep the backend on that address. Do not expose the development server or API to an untrusted network without first reviewing and changing the development CORS and host settings.
+The frontend's API service targets `http://localhost:8000`. Keep the backend on that address for local development and for browser-based predictions from the Vercel frontend. Do not expose the development server or API to an untrusted network without first reviewing and changing the development CORS and host settings.
 
-## Deploy the public frontend to Vercel
+## Deploy the frontend to Vercel
 
-The Vercel deployment is a static frontend demo only. The backend depends on Ollama/MedGemma running locally and is not deployed with the website. Production builds therefore explain this limitation and disable image uploads; run the frontend in development with the local backend to try predictions.
+The Vercel deployment hosts only the static frontend. It does **not** host FastAPI, Ollama, or MedGemma. In the deployed site, the browser sends an image to `http://localhost:8000`, which means the backend and Ollama must be running on the same computer as the person using the site. The images go to that person's local backend, not to Vercel. Visitors who have not installed and started the local services cannot get a prediction.
+
+To use predictions from the public website on your own computer:
+
+1. Install Ollama and run `ollama pull medgemma:4b`.
+2. Start Ollama and the FastAPI backend locally as described above; keep the API at `http://localhost:8000`.
+3. Open the Vercel site in a browser on that same computer and choose an image.
+4. If prompted, allow the site to access the local network. Browser security settings, managed-device policies, or firewall rules may prevent a public HTTPS page from reaching a local service.
+
+The backend currently allows requests from any CORS origin. This is convenient for the public frontend to connect to a user's loopback API, but it is not a production security configuration. Do not expose the backend to the public internet. A prediction service for all visitors requires a separately hosted backend and model inference service, appropriate resource capacity, and additional security/privacy review.
 
 To import this GitHub repository in Vercel:
 
