@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import CameraCapture from '../components/CameraCapture';
 import Disclaimer from '../components/Disclaimer';
 import ImagePreview from '../components/ImagePreview';
 import ImageUploader from '../components/ImageUploader';
 import PredictionResult from '../components/PredictionResult';
 import { analyzeImage } from '../services/api';
+import { storeImage } from '../services/storage';
 
 const translations = {
   id: {
@@ -26,7 +28,7 @@ const translations = {
     statusReady: 'Siap menerima gambar',
     statusDescription: 'Hasil hanya muncul setelah Anda memilih gambar dan memulai analisis.',
     localLabel: 'Pemrosesan lokal',
-    localDescription: 'Gambar diproses di perangkat ini melalui Ollama.',
+    localDescription: 'Prediksi berjalan di perangkat ini melalui Ollama.',
     classesLabel: 'Label demonstrasi',
     classesDescription: 'Healthy Skin dan Chickenpox',
     aboutEyebrow: 'TENTANG CHICKENPOXAI',
@@ -46,10 +48,10 @@ const translations = {
     genBody: 'MedGemma lokal menghasilkan tebakan label dan deskripsi visual dari gambar.',
     featureEyebrow: 'FITUR',
     featureTitle: 'Alur screening yang sederhana dan transparan',
-    featureUpload: 'Unggah gambar',
-    featureUploadBody: 'Pratinjau gambar sebelum analisis, dengan format umum yang didukung.',
+    featureUpload: 'Unggah atau foto langsung',
+    featureUploadBody: 'Pilih gambar dari perangkat atau ambil foto dengan kamera.',
     featureAnalyze: 'Analisis lokal',
-    featureAnalyzeBody: 'Gambar dikirim ke model lokal Ollama, bukan layanan AI cloud.',
+    featureAnalyzeBody: 'Analisis berjalan di Ollama lokal; dengan persetujuan, salinan gambar disimpan publik di Vercel Blob.',
     featureResult: 'Hasil yang mudah dipahami',
     featureResultBody: 'Tampilkan label tebakan, pengamatan visual, dan batasan hasil.',
     evaluationEyebrow: 'EVALUASI & BATASAN',
@@ -65,13 +67,37 @@ const translations = {
       'Gunakan gambar yang jelas dengan pencahayaan cukup. Hindari menyertakan informasi pribadi yang tidak diperlukan.',
     localBackendNoticeTitle: 'Mode prediksi lokal',
     localBackendNotice:
-      'Situs ini berjalan di Vercel, tetapi gambar dikirim langsung ke backend di komputer Anda, bukan ke Vercel. Untuk menggunakan prediksi, jalankan Ollama dengan medgemma:4b dan backend FastAPI di komputer ini. Browser mungkin meminta izin akses jaringan lokal.',
+      'Pilih unggah atau ambil foto. Sebelum analisis, Anda harus menyetujui penyimpanan permanen di Vercel Blob; tautannya publik bagi siapa pun yang memilikinya. Gambar juga dikirim ke backend lokal untuk prediksi. Jangan unggah foto sensitif atau identitas pribadi.',
+    selectImage: 'Pilih gambar atau gunakan kamera',
+    upload: 'Unggah Gambar',
+    dragDrop: 'Pilih gambar dari perangkat',
+    browse: 'JPG, PNG, atau WEBP · maks. 10 MB',
+    fileTypes: 'TERSIMPAN PUBLIK DI VERCEL BLOB',
+    takePhoto: 'Foto dengan Kamera',
+    cameraDescription: 'Ambil foto langsung dari kamera perangkat',
+    cameraHint: 'Memerlukan izin kamera dan koneksi aman HTTPS',
+    cameraTitle: 'Ambil foto',
+    cameraStarting: 'Meminta akses kamera...',
+    cameraUnavailable: 'Browser ini tidak mendukung akses kamera. Silakan unggah gambar.',
+    cameraPermissionError: 'Kamera tidak dapat dibuka. Izinkan akses kamera dan pastikan tidak sedang dipakai aplikasi lain.',
+    cameraCaptureError: 'Foto tidak berhasil diambil. Silakan coba lagi.',
+    capturePhoto: 'Ambil Foto',
+    close: 'Tutup',
+    cancel: 'Batal',
+    storageConsent:
+      'Saya setuju gambar ini disimpan permanen di Vercel Blob sebagai tautan publik. Siapa pun yang memiliki tautan dapat melihatnya.',
+    storageUrlLabel: 'Foto tersimpan. Tautan publik:',
+    storageError: 'Gambar gagal disimpan ke Vercel Blob. Silakan coba lagi.',
+    stored: 'Foto Sudah Tersimpan',
+    retryAnalysis: 'Coba Analisis Lagi',
+    invalidImage: 'Pilih file JPG, PNG, atau WEBP berukuran maksimal 10 MB.',
+    savingMessage: 'Menyimpan foto ke Vercel Blob lalu meminta prediksi ke model lokal...',
     preview: 'PRATINJAU GAMBAR',
     analyze: 'Analisis Gambar',
     analyzing: 'Sedang menganalisis...',
     remove: 'Hapus Gambar',
     loadingTitle: 'Menganalisis Gambar...',
-    loadingMessage: 'Model lokal sedang memproses gambar. Mohon tunggu.',
+    loadingMessage: 'Foto disimpan ke Vercel Blob; model lokal sedang memproses gambar. Mohon tunggu.',
     result: 'Perkiraan GenAI (bukan diagnosis)',
     guessPrefix: 'Tebakan teratas model:',
     observation: 'Pengamatan visual model',
@@ -109,7 +135,7 @@ const translations = {
     statusReady: 'Ready for an image',
     statusDescription: 'A result appears only after you select an image and start the analysis.',
     localLabel: 'Local processing',
-    localDescription: 'Images are processed on this device through Ollama.',
+    localDescription: 'Predictions run on this device through Ollama.',
     classesLabel: 'Demo labels',
     classesDescription: 'Healthy Skin and Chickenpox',
     aboutEyebrow: 'ABOUT CHICKENPOXAI',
@@ -129,10 +155,10 @@ const translations = {
     genBody: 'Local MedGemma produces a label guess and visual description from an image.',
     featureEyebrow: 'FEATURES',
     featureTitle: 'A simple and transparent screening flow',
-    featureUpload: 'Image upload',
-    featureUploadBody: 'Preview the image before analysis, using supported common formats.',
+    featureUpload: 'Upload or take a photo',
+    featureUploadBody: 'Choose an image from your device or take a new photo with the camera.',
     featureAnalyze: 'Local analysis',
-    featureAnalyzeBody: 'Images are sent to local Ollama, not a cloud AI service.',
+    featureAnalyzeBody: 'Analysis runs in local Ollama; with consent, a copy is stored publicly in Vercel Blob.',
     featureResult: 'Understandable results',
     featureResultBody: 'See the model’s label guess, visual observation, and limitations.',
     evaluationEyebrow: 'EVALUATION & LIMITATIONS',
@@ -148,13 +174,37 @@ const translations = {
       'Use a clear image with sufficient lighting. Avoid including unnecessary personal information.',
     localBackendNoticeTitle: 'Local prediction mode',
     localBackendNotice:
-      'This site is hosted on Vercel, but images are sent directly to the backend on your computer, not to Vercel. To use predictions, run Ollama with medgemma:4b and the FastAPI backend on this computer. Your browser may ask permission to access the local network.',
+      'Choose an upload or take a photo. Before analysis, you must agree to permanent storage in Vercel Blob; anyone with the public link can view it. The image is also sent to your local backend for prediction. Do not upload sensitive or personally identifying photos.',
+    selectImage: 'Choose an image or use the camera',
+    upload: 'Upload Image',
+    dragDrop: 'Choose an image from your device',
+    browse: 'JPG, PNG, or WEBP · max 10 MB',
+    fileTypes: 'STORED PUBLICLY IN VERCEL BLOB',
+    takePhoto: 'Take a Photo',
+    cameraDescription: 'Capture a photo with your device camera',
+    cameraHint: 'Camera permission and a secure HTTPS connection required',
+    cameraTitle: 'Take a photo',
+    cameraStarting: 'Requesting camera access...',
+    cameraUnavailable: 'This browser does not support camera access. Please upload an image.',
+    cameraPermissionError: 'Could not open the camera. Allow camera access and make sure another app is not using it.',
+    cameraCaptureError: 'The photo could not be captured. Please try again.',
+    capturePhoto: 'Capture Photo',
+    close: 'Close',
+    cancel: 'Cancel',
+    storageConsent:
+      'I agree to store this image permanently in Vercel Blob as a public link. Anyone with the link can view it.',
+    storageUrlLabel: 'Photo stored. Public link:',
+    storageError: 'The image could not be stored in Vercel Blob. Please try again.',
+    stored: 'Photo Stored',
+    retryAnalysis: 'Retry Analysis',
+    invalidImage: 'Choose a JPG, PNG, or WEBP file up to 10 MB.',
+    savingMessage: 'Saving the photo to Vercel Blob, then requesting a prediction from the local model...',
     preview: 'IMAGE PREVIEW',
     analyze: 'Analyze Image',
     analyzing: 'Analyzing...',
     remove: 'Remove Image',
     loadingTitle: 'Analyzing Image...',
-    loadingMessage: 'The local model is processing the image. Please wait.',
+    loadingMessage: 'The photo is saved to Vercel Blob; the local model is processing it. Please wait.',
     result: 'GenAI Estimate (not a diagnosis)',
     guessPrefix: 'Model’s top guess:',
     observation: 'Model visual observation',
@@ -188,6 +238,9 @@ export default function Home() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [storageConsent, setStorageConsent] = useState(false);
+  const [storedImageUrl, setStoredImageUrl] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
@@ -199,23 +252,37 @@ export default function Home() {
 
   const handleFileSelection = (file) => {
     if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+      setError(t.invalidImage);
+      return;
+    }
     setSelectedFile(file);
     setError('');
     setResult(null);
+    setStoredImageUrl('');
+    setStorageConsent(false);
     if (imageUrl) URL.revokeObjectURL(imageUrl);
     setImageUrl(URL.createObjectURL(file));
   };
 
   const handleAnalyze = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !storageConsent) return;
     setIsLoading(true);
     setError('');
     try {
+      if (!storedImageUrl) {
+        const blob = await storeImage(selectedFile);
+        setStoredImageUrl(blob.url);
+      }
       const response = await analyzeImage(selectedFile, language);
       setResult(response);
     } catch (err) {
       const detail = err?.response?.data?.detail
-        || (err?.code === 'ERR_NETWORK' ? t.localBackendError : t.apiError);
+        || (err?.code === 'ERR_NETWORK'
+          ? t.localBackendError
+          : err?.message?.includes('Choose a JPG')
+            ? t.invalidImage
+            : err?.response?.data?.error || t.storageError);
       setError(detail);
     } finally {
       setIsLoading(false);
@@ -226,6 +293,9 @@ export default function Home() {
     setSelectedFile(null);
     setResult(null);
     setError('');
+    setStorageConsent(false);
+    setStoredImageUrl('');
+    setCameraOpen(false);
     if (imageUrl) URL.revokeObjectURL(imageUrl);
     setImageUrl('');
   };
@@ -433,7 +503,12 @@ export default function Home() {
             <p>{t.localBackendNotice}</p>
           </div>
           {!selectedFile ? (
-            <ImageUploader onFileSelected={handleFileSelection} disabled={isLoading} t={t} />
+            <ImageUploader
+              onFileSelected={handleFileSelection}
+              onCameraClick={() => setCameraOpen(true)}
+              disabled={isLoading}
+              t={t}
+            />
           ) : (
             <ImagePreview
               imageUrl={imageUrl}
@@ -441,6 +516,10 @@ export default function Home() {
               onAnalyze={handleAnalyze}
               onRemove={handleReset}
               isLoading={isLoading}
+              canAnalyze={storageConsent}
+              storageConsent={storageConsent}
+              onStorageConsentChange={setStorageConsent}
+              storedImageUrl={storedImageUrl}
               t={t}
             />
           )}
@@ -448,7 +527,7 @@ export default function Home() {
           {isLoading && (
             <div className="loading-panel">
               <div className="spinner" />
-              <div><h4>{t.loadingTitle}</h4><p>{t.loadingMessage}</p></div>
+              <div><h4>{t.loadingTitle}</h4><p>{t.savingMessage}</p></div>
             </div>
           )}
           {error && <div className="error-message" role="alert">{error}</div>}
@@ -459,6 +538,17 @@ export default function Home() {
             </button>
           )}
         </section>
+
+        {cameraOpen && (
+          <CameraCapture
+            onCapture={(file) => {
+              setCameraOpen(false);
+              handleFileSelection(file);
+            }}
+            onClose={() => setCameraOpen(false)}
+            t={t}
+          />
+        )}
 
         <div className="disclaimer-wrap"><Disclaimer t={t} /></div>
       </main>

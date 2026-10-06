@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 
-export default function ImageUploader({ onFileSelected, disabled, t }) {
+export default function ImageUploader({ onFileSelected, onCameraClick, disabled, t }) {
   const inputRef = useRef(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -22,29 +22,49 @@ export default function ImageUploader({ onFileSelected, disabled, t }) {
         setIsDragOver(false);
         if (!disabled) handleFiles(event.dataTransfer.files);
       }}
-      onClick={() => !disabled && inputRef.current?.click()}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          inputRef.current?.click();
-        }
-      }}
+      role="group"
+      aria-label={t.selectImage}
     >
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-        hidden
-        onChange={(event) => handleFiles(event.target.files)}
-      />
-      <div className="upload-content">
-        <div className="upload-icon">⬆</div>
-        <h3>{t.upload}</h3>
-        <p>{t.dragDrop}</p>
-        <p className="subtle">{t.browse}</p>
-        <span className="file-types">{t.fileTypes}</span>
+      <div className="source-options">
+        <label
+          className={`source-option ${disabled ? 'source-option-disabled' : ''}`}
+          role="button"
+          tabIndex={disabled ? -1 : 0}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              inputRef.current?.click();
+            }
+          }}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            hidden
+            disabled={disabled}
+            onChange={(event) => {
+              handleFiles(event.target.files);
+              event.target.value = '';
+            }}
+          />
+          <span className="upload-icon" aria-hidden="true">↑</span>
+          <strong>{t.upload}</strong>
+          <span>{t.dragDrop}</span>
+          <span className="subtle">{t.browse}</span>
+          <span className="file-types">{t.fileTypes}</span>
+        </label>
+        <button
+          className="source-option"
+          type="button"
+          onClick={onCameraClick}
+          disabled={disabled}
+        >
+          <span className="upload-icon camera-icon" aria-hidden="true">◎</span>
+          <strong>{t.takePhoto}</strong>
+          <span>{t.cameraDescription}</span>
+          <span className="subtle">{t.cameraHint}</span>
+        </button>
       </div>
     </div>
   );

@@ -66,7 +66,9 @@ ChickenpoxAI/
 │   ├── validation/
 │   └── test/
 ├── frontend/
+│   ├── api/upload.js           # Vercel Blob upload authorization function
 │   ├── src/
+│   │   └── components/CameraCapture.jsx
 │   ├── package.json
 │   └── vite.config.js
 ├── results/                    # Generated reports and plots (not committed)
@@ -152,16 +154,17 @@ The frontend's API service targets `http://localhost:8000`. Keep the backend on 
 
 ## Deploy the frontend to Vercel
 
-The Vercel deployment hosts only the static frontend. It does **not** host FastAPI, Ollama, or MedGemma. In the deployed site, the browser sends an image to `http://localhost:8000`, which means the backend and Ollama must be running on the same computer as the person using the site. The images go to that person's local backend, not to Vercel. Visitors who have not installed and started the local services cannot get a prediction.
+The Vercel deployment hosts the frontend and a small upload-authorization function; it does **not** host FastAPI, Ollama, or MedGemma. Users can select an image or take a camera photo. After the user explicitly accepts the notice, the image is permanently uploaded to a **public** Vercel Blob store. Anyone who has its URL can view it. The browser then sends the image to `http://localhost:8000` for prediction, so FastAPI and Ollama must be running on the same computer as the person using the site. Visitors who have not installed and started the local services cannot get a prediction.
 
 To use predictions from the public website on your own computer:
 
 1. Install Ollama and run `ollama pull medgemma:4b`.
 2. Start Ollama and the FastAPI backend locally as described above; keep the API at `http://localhost:8000`.
-3. Open the Vercel site in a browser on that same computer and choose an image.
-4. If prompted, allow the site to access the local network. Browser security settings, managed-device policies, or firewall rules may prevent a public HTTPS page from reaching a local service.
+3. Open the Vercel site in a browser on that same computer and upload an image or take a photo. Camera access requires a secure HTTPS page and camera permission.
+4. Review and accept the public-storage notice before analyzing. A stored image remains in Blob until manually deleted in the Vercel Blob dashboard. Do not upload sensitive or identifying skin images.
+5. If prompted, allow the site to access the local network. Browser security settings, managed-device policies, or firewall rules may prevent a public HTTPS page from reaching a local service.
 
-The backend currently allows requests from any CORS origin. This is convenient for the public frontend to connect to a user's loopback API, but it is not a production security configuration. Do not expose the backend to the public internet. A prediction service for all visitors requires a separately hosted backend and model inference service, appropriate resource capacity, and additional security/privacy review.
+The backend currently allows requests from any CORS origin. The public Blob upload function also accepts uploads from visitors without login, restricted by origin, image type, and a 10 MB size limit. These settings do not prevent automated abuse or unexpected storage/bandwidth charges; monitor Blob usage and delete unwanted files. Do not expose the local backend to the public internet. A prediction service for all visitors requires a separately hosted backend and model inference service, appropriate resource capacity, and additional security/privacy review.
 
 To import this GitHub repository in Vercel:
 
@@ -169,7 +172,8 @@ To import this GitHub repository in Vercel:
 2. Set **Root Directory** to `frontend`.
 3. Select **Vite** as the framework preset (if it is not detected automatically).
 4. Use `npm run build` as the build command and `dist` as the output directory.
-5. Deploy. No environment variables are required for the static demo.
+5. In the project's **Storage** area, create a **public Vercel Blob** store and connect it to the project for the **Production** environment. The `BLOB_READ_WRITE_TOKEN` is required by the upload function; Vercel adds it when connecting a Blob store.
+6. Deploy. No environment variables are required for the static frontend; the Blob store connection provides the upload function's token.
 
 Subsequent pushes to the connected GitHub branch can trigger new deployments.
 
@@ -319,8 +323,10 @@ Successful response:
 
 ## Privacy and safe use
 
-- The browser sends the selected image to the backend configured by the frontend. The backend sends image content to the Ollama API at the configured local address. In the default configuration these services run on the same computer; the image is not sent to a hosted ChickenpoxAI inference API.
-- The application does not intentionally save uploaded images to a project folder. Avoid uploading identifiable or sensitive images, and review the behavior of your local operating system, Ollama installation, and any logging or monitoring tools you use.
+- Before analysis, the user must consent to saving a copy in public Vercel Blob. The copy persists until a project owner deletes it from the Blob dashboard. Anyone with its URL can view it; links may be shared or logged by browsers and other services. Do not upload identifiable or sensitive images.
+- The original image is also sent to the FastAPI backend configured by the frontend, which sends it to Ollama at the configured local address. In the default workflow these services run on the same computer; ChickenpoxAI does not send the image to a hosted inference model.
+- The application does not intentionally save the prediction request image to a project folder. Review the behavior of your local operating system, Ollama installation, and any logging or monitoring tools you use.
+- Public, unauthenticated uploads can be abused despite origin/type/size checks and may create storage or bandwidth charges. Monitor usage and remove unwanted uploads in the Vercel Blob dashboard.
 - The backend accepts images up to 10 MB and validates their file extension and readability. This is not a complete production security review.
 - The backend currently enables permissive CORS, and its built-in entry point defaults to binding all interfaces. The command in this README explicitly binds Uvicorn to loopback for local use; keep the service private unless you deliberately configure and secure it for another environment.
 - Outputs can be incorrect or biased, especially for blurry, low-quality, atypical, or out-of-distribution images. Do not use the application to diagnose, rule out, or treat a condition.
