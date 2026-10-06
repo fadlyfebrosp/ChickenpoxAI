@@ -1146,39 +1146,6 @@ a:focus-visible,
   text-align: center;
 }
 
-.storage-consent {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 16px 0;
-  padding: 13px 14px;
-  border: 1px solid #f0d9ad;
-  border-radius: 13px;
-  background: #fffaf0;
-  color: #5e4b2d;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.storage-consent input {
-  width: 17px;
-  height: 17px;
-  flex: 0 0 auto;
-  margin: 1px 0 0;
-  accent-color: var(--blue);
-}
-
-.stored-image-link {
-  overflow-wrap: anywhere;
-  margin: 12px 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.stored-image-link a {
-  color: var(--blue);
-}
-
 .camera-backdrop {
   position: fixed;
   z-index: 20;
