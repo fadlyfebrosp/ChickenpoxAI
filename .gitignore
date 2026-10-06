@@ -1,0 +1,46 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.idea/
+.vscode/
+.DS_Store
+*.log
+*.sqlite3
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend generated files
+frontend/node_modules/
+frontend/dist/
+
+# Model artifacts
+backend/models/*.pth
+!backend/models/.gitkeep
+
+# Dataset files are intentionally left untracked unless the user adds real data
+# Keep the structure only.
+dataset/**
+!dataset/.gitkeep
+!dataset/train/.gitkeep
+!dataset/validation/.gitkeep
+!dataset/test/.gitkeep
+!dataset/train/healthy/.gitkeep
+!dataset/train/chickenpox/.gitkeep
+!dataset/validation/healthy/.gitkeep
+!dataset/validation/chickenpox/.gitkeep
+!dataset/test/healthy/.gitkeep
+!dataset/test/chickenpox/.gitkeep
+
+# Results generated during training/evaluation
+results/*.png
+results/*.json
+!results/.gitkeep

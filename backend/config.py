@@ -1,0 +1,9 @@
+APP_NAME = "ChickenpoxAI"
+APP_VERSION = "0.1.0"
+ALLOWED_CLASSES = ["Healthy Skin", "Chickenpox"]
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+OLLAMA_URL = "http://127.0.0.1:11434"
+OLLAMA_MODEL = "medgemma:4b"
+HOST = "0.0.0.0"
+PORT = 8000
